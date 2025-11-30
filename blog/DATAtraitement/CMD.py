@@ -1,409 +1,100 @@
 import django_setup
 django_setup.setup_django()
-from blog.models import ISE, DA, AO, Cde, Appartenir_A_I, Appartenir_A_D, Appartenir_A_A, Commander, Article, Appartenir_P_A
+
 import pandas as pd
+from utils import *
+from blog.models import Plant, Famille, Article, AO, ISE, DA, Cde, Fournisseur, Appartenir_P_A, Appartenir_A_I, Appartenir_A_D, Appartenir_A_A, Commander
+def process_cde_data (fichier) : 
+    Commander.objects.all().delete()
 
-def rechercher_ise(code_ise):
-    """
-    Recherche toutes les informations liées à un code ISE
-    """
-    try:
-        ise_obj = ISE.objects.filter(id_ise=code_ise).first()
-        
-        if not ise_obj:
-            print(f"❌ Aucun ISE trouvé avec le code: {code_ise}")
-            return None
-        
-        relations_ise = Appartenir_A_I.objects.filter(ise=ise_obj).select_related(
-            'article', 'article__famille'
-        )
-        
-        if not relations_ise.exists():
-            print(f"⚠️ ISE {code_ise} trouvé mais aucun article associé")
-            return None
-        
-        data = []
-        for rel_ise in relations_ise:
-            article = rel_ise.article
-            
-            # Chercher DA
-            rel_da = Appartenir_A_D.objects.filter(article=article).select_related('da').first()
-            
-            # Chercher AO
-            rel_ao = Appartenir_A_A.objects.filter(article=article).select_related('ao').first()
-            
-            # Chercher CMD
-            rel_cmd = Commander.objects.filter(article=article).select_related('cde', 'fournisseur').first()
-            
-            # Chercher Plant
-            rel_plant = Appartenir_P_A.objects.filter(article=article).select_related('plant').first()
-            
-            data.append({
-                'Code': article.code_article,
-                'Description': article.designation_article,
-                'ID ISE': ise_obj.id_ise,
-                'Date ISE': rel_ise.date_ise,
-                'Qté ISE': rel_ise.quantite_ise,
-                'Mnt ISE': rel_ise.montant_ise,
-                'DA': rel_da.da.id_DA if rel_da and rel_da.da else 'N/A',
-                'Date DA': rel_da.date_DA if rel_da else None,
-                'Qté DA': rel_da.quantite_DA if rel_da else None,
-                'Mnt DA': rel_da.montant_DA if rel_da else None,
-                'AO': rel_ao.ao.id_AO if rel_ao and rel_ao.ao else 'N/A',
-                'Date AO': rel_ao.date_AO if rel_ao else None,
-                'CMD': rel_cmd.cde.id_Cde if rel_cmd and rel_cmd.cde else 'N/A',
-                'Date CMD': rel_cmd.date_Cde if rel_cmd else None,
-                'Qté CMD': rel_cmd.quantite_Cde if rel_cmd else None,
-                'Mnt CMD': rel_cmd.montant_Cde if rel_cmd else None,
-                'Fournisseur': rel_cmd.fournisseur.designation_Fournisseur if rel_cmd and rel_cmd.fournisseur else 'N/A',
-                'Plant': rel_plant.plant.code_plant if rel_plant and rel_plant.plant else 'N/A',
-                'Désignation Plant': rel_plant.plant.designation_plant if rel_plant and rel_plant.plant else 'N/A'
-            })
-        
-        df_resultat = pd.DataFrame(data)
-        
-        print(f"\n{'='*150}")
-        print(f"🔍 RÉSULTATS POUR ISE: {code_ise}")
-        print(f"{'='*150}")
-        print(f"\n📊 Nombre d'articles trouvés: {len(df_resultat)}")
-        print(f"\n{df_resultat.to_string(index=False)}")
-        print(f"\n{'='*150}")
-        
-        if not df_resultat.empty:
-            print(f"\n💰 Montant total ISE: {df_resultat['Mnt ISE'].sum():,.2f}")
-            print(f"💰 Montant total DA: {df_resultat['Mnt DA'].sum():,.2f}")
-            print(f"💰 Montant total CMD: {df_resultat['Mnt CMD'].sum():,.2f}")
-        
-        return df_resultat
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de la recherche ISE: {e}")
-        return None
+    df_cmd_1 = pd.read_excel(fichier, sheet_name=0)
+    df_cmd_2 = pd.read_excel(fichier, sheet_name=1)
 
+    df_cmd_1.drop_duplicates(inplace=True) 
+    df_cmd_2.drop_duplicates(inplace=True)  
 
-def rechercher_da(code_da):
-    """
-    Recherche toutes les informations liées à un code DA
-    """
-    try:
-        da_obj = DA.objects.filter(id_DA=code_da).first()
-        
-        if not da_obj:
-            print(f"❌ Aucun DA trouvé avec le code: {code_da}")
-            return None
-        
-        relations_da = Appartenir_A_D.objects.filter(da=da_obj).select_related(
-            'article', 'article__famille'
-        )
-        
-        if not relations_da.exists():
-            print(f"⚠️ DA {code_da} trouvé mais aucun article associé")
-            return None
-        
-        data = []
-        for rel_da in relations_da:
-            article = rel_da.article
-            
-            # Chercher ISE
-            rel_ise = Appartenir_A_I.objects.filter(article=article).select_related('ise').first()
-            
-            # Chercher AO
-            rel_ao = Appartenir_A_A.objects.filter(article=article).select_related('ao').first()
-            
-            # Chercher CMD
-            rel_cmd = Commander.objects.filter(article=article).select_related('cde', 'fournisseur').first()
-            
-            # Chercher Plant
-            rel_plant = Appartenir_P_A.objects.filter(article=article).select_related('plant').first()
-            
-            data.append({
-                'Code': article.code_article,
-                'Description': article.designation_article,
-                'ID ISE': rel_ise.ise.id_ise if rel_ise and rel_ise.ise else 'N/A',
-                'Date ISE': rel_ise.date_ise if rel_ise else None,
-                'Qté ISE': rel_ise.quantite_ise if rel_ise else None,
-                'Mnt ISE': rel_ise.montant_ise if rel_ise else None,
-                'DA': da_obj.id_DA,
-                'Date DA': rel_da.date_DA,
-                'Qté DA': rel_da.quantite_DA,
-                'Mnt DA': rel_da.montant_DA,
-                'AO': rel_ao.ao.id_AO if rel_ao and rel_ao.ao else 'N/A',
-                'Date AO': rel_ao.date_AO if rel_ao else None,
-                'CMD': rel_cmd.cde.id_Cde if rel_cmd and rel_cmd.cde else 'N/A',
-                'Date CMD': rel_cmd.date_Cde if rel_cmd else None,
-                'Qté CMD': rel_cmd.quantite_Cde if rel_cmd else None,
-                'Mnt CMD': rel_cmd.montant_Cde if rel_cmd else None,
-                'Fournisseur': rel_cmd.fournisseur.designation_Fournisseur if rel_cmd and rel_cmd.fournisseur else 'N/A',
-                'Plant': rel_plant.plant.code_plant if rel_plant and rel_plant.plant else 'N/A',
-                'Désignation Plant': rel_plant.plant.designation_plant if rel_plant and rel_plant.plant else 'N/A'
-            })
-        
-        df_resultat = pd.DataFrame(data)
-        
-        print(f"\n{'='*150}")
-        print(f"🔍 RÉSULTATS POUR DA: {code_da}")
-        print(f"{'='*150}")
-        print(f"\n📊 Nombre d'articles trouvés: {len(df_resultat)}")
-        print(f"\n{df_resultat.to_string(index=False)}")
-        print(f"\n{'='*150}")
-        
-        if not df_resultat.empty:
-            print(f"\n💰 Montant total ISE: {df_resultat['Mnt ISE'].sum():,.2f}")
-            print(f"💰 Montant total DA: {df_resultat['Mnt DA'].sum():,.2f}")
-            print(f"💰 Montant total CMD: {df_resultat['Mnt CMD'].sum():,.2f}")
-        
-        return df_resultat
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de la recherche DA: {e}")
-        return None
+    df_cmd = pd.merge(df_cmd_1, df_cmd_2, on="Commande")
 
+    # Nettoyage des colonnes inutiles
+    df_cmd = df_cmd.drop(columns=['AO_x','Fournissuer','Montant Commande TTC','Nombre de CODE'])
+    pd.set_option('display.max_columns', None)
+    print(df_cmd.head())
 
-def rechercher_ao(code_ao):
-    """
-    Recherche toutes les informations liées à un code AO
-    """
-    try:
-        ao_obj = AO.objects.filter(id_AO=code_ao).first()
-        
-        if not ao_obj:
-            print(f"❌ Aucun AO trouvé avec le code: {code_ao}")
-            return None
-        
-        relations_ao = Appartenir_A_A.objects.filter(ao=ao_obj).select_related(
-            'article', 'article__famille'
-        )
-        
-        if not relations_ao.exists():
-            print(f"⚠️ AO {code_ao} trouvé mais aucun article associé")
-            return None
-        
-        data = []
-        for rel_ao in relations_ao:
-            article = rel_ao.article
-            
-            # Chercher ISE
-            rel_ise = Appartenir_A_I.objects.filter(article=article).select_related('ise').first()
-            
-            # Chercher DA
-            rel_da = Appartenir_A_D.objects.filter(article=article).select_related('da').first()
-            
-            # Chercher CMD
-            rel_cmd = Commander.objects.filter(article=article).select_related('cde', 'fournisseur').first()
-            
-            # Chercher Plant
-            rel_plant = Appartenir_P_A.objects.filter(article=article).select_related('plant').first()
-            
-            data.append({
-                'Code': article.code_article,
-                'Description': article.designation_article,
-                'ID ISE': rel_ise.ise.id_ise if rel_ise and rel_ise.ise else 'N/A',
-                'Date ISE': rel_ise.date_ise if rel_ise else None,
-                'Qté ISE': rel_ise.quantite_ise if rel_ise else None,
-                'Mnt ISE': rel_ise.montant_ise if rel_ise else None,
-                'DA': rel_da.da.id_DA if rel_da and rel_da.da else 'N/A',
-                'Date DA': rel_da.date_DA if rel_da else None,
-                'Qté DA': rel_da.quantite_DA if rel_da else None,
-                'Mnt DA': rel_da.montant_DA if rel_da else None,
-                'AO': ao_obj.id_AO,
-                'Date AO': rel_ao.date_AO,
-                'CMD': rel_cmd.cde.id_Cde if rel_cmd and rel_cmd.cde else 'N/A',
-                'Date CMD': rel_cmd.date_Cde if rel_cmd else None,
-                'Qté CMD': rel_cmd.quantite_Cde if rel_cmd else None,
-                'Mnt CMD': rel_cmd.montant_Cde if rel_cmd else None,
-                'Fournisseur': rel_cmd.fournisseur.designation_Fournisseur if rel_cmd and rel_cmd.fournisseur else 'N/A',
-                'Plant': rel_plant.plant.code_plant if rel_plant and rel_plant.plant else 'N/A',
-                'Désignation Plant': rel_plant.plant.designation_plant if rel_plant and rel_plant.plant else 'N/A'
-            })
-        
-        df_resultat = pd.DataFrame(data)
-        
-        print(f"\n{'='*150}")
-        print(f"🔍 RÉSULTATS POUR AO: {code_ao}")
-        print(f"{'='*150}")
-        print(f"\n📊 Nombre d'articles trouvés: {len(df_resultat)}")
-        print(f"\n{df_resultat.to_string(index=False)}")
-        print(f"\n{'='*150}")
-        
-        if not df_resultat.empty:
-            print(f"\n💰 Montant total ISE: {df_resultat['Mnt ISE'].sum():,.2f}")
-            print(f"💰 Montant total DA: {df_resultat['Mnt DA'].sum():,.2f}")
-            print(f"💰 Montant total CMD: {df_resultat['Mnt CMD'].sum():,.2f}")
-        
-        return df_resultat
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de la recherche AO: {e}")
-        return None
+    # Nettoyage des formats
+    for c in ['PU Commande', 'Qte Commande', 'Montant Commande']:
+        df_cmd[c] = clean_decimal(df_cmd[c])
 
+    for c in ['Commande', 'DA', 'ID ISE','AO_y', 'Fournisseur', 'CODE', 'Description', 'Udm', 'SF','Plant']:
+        df_cmd[c] = clean_text(df_cmd[c])
 
-def rechercher_cmd(code_cmd):
-    """
-    Recherche toutes les informations liées à un code CMD
-    """
-    try:
-        cmd_obj = Cde.objects.filter(id_Cde=code_cmd).first()
-        
-        if not cmd_obj:
-            print(f"❌ Aucune commande trouvée avec le code: {code_cmd}")
-            return None
-        
-        # Récupérer toutes les relations Article-CMD pour ce code CMD
-        relations_cmd = Commander.objects.filter(cde=cmd_obj).select_related(
-            'article', 'article__famille', 'fournisseur'
-        )
-        
-        if not relations_cmd.exists():
-            print(f"⚠️ CMD {code_cmd} trouvée mais aucun article associé")
-            return None
-        
-        data = []
-        for rel_cmd in relations_cmd:
-            article = rel_cmd.article
-            
-            # Chercher ISE
-            rel_ise = Appartenir_A_I.objects.filter(article=article).select_related('ise').first()
-            
-            # Chercher DA
-            rel_da = Appartenir_A_D.objects.filter(article=article).select_related('da').first()
-            
-            # Chercher AO
-            rel_ao = Appartenir_A_A.objects.filter(article=article).select_related('ao').first()
-            
-            # Chercher Plant
-            rel_plant = Appartenir_P_A.objects.filter(article=article).select_related('plant').first()
-            
-            data.append({
-                'Code': article.code_article,
-                'Description': article.designation_article,
-                'ID ISE': rel_ise.ise.id_ise if rel_ise and rel_ise.ise else 'N/A',
-                'Date ISE': rel_ise.date_ise if rel_ise else None,
-                'Qté ISE': rel_ise.quantite_ise if rel_ise else None,
-                'Mnt ISE': rel_ise.montant_ise if rel_ise else None,
-                'DA': rel_da.da.id_DA if rel_da and rel_da.da else 'N/A',
-                'Date DA': rel_da.date_DA if rel_da else None,
-                'Qté DA': rel_da.quantite_DA if rel_da else None,
-                'Mnt DA': rel_da.montant_DA if rel_da else None,
-                'AO': rel_ao.ao.id_AO if rel_ao and rel_ao.ao else 'N/A',
-                'Date AO': rel_ao.date_AO if rel_ao else None,
-                'CMD': cmd_obj.id_Cde,
-                'Date CMD': rel_cmd.date_Cde,
-                'Qté CMD': rel_cmd.quantite_Cde,
-                'Mnt CMD': rel_cmd.montant_Cde,
-                'Fournisseur': rel_cmd.fournisseur.designation_Fournisseur if rel_cmd.fournisseur else 'N/A',
-                'Plant': rel_plant.plant.code_plant if rel_plant and rel_plant.plant else 'N/A',
-                'Désignation Plant': rel_plant.plant.designation_plant if rel_plant and rel_plant.plant else 'N/A'
-            })
-        
-        df_resultat = pd.DataFrame(data)
-        
-        print(f"\n{'='*150}")
-        print(f"🔍 RÉSULTATS POUR CMD: {code_cmd}")
-        print(f"{'='*150}")
-        print(f"\n📊 Nombre d'articles trouvés: {len(df_resultat)}")
-        print(f"\n{df_resultat.to_string(index=False)}")
-        print(f"\n{'='*150}")
-        
-        if not df_resultat.empty:
-            print(f"\n💰 Montant total ISE: {df_resultat['Mnt ISE'].sum():,.2f}")
-            print(f"💰 Montant total DA: {df_resultat['Mnt DA'].sum():,.2f}")
-            print(f"💰 Montant total CMD: {df_resultat['Mnt CMD'].sum():,.2f}")
-        
-        return df_resultat
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de la recherche CMD: {e}")
-        return None
+    df_cmd['Date commande'] = clean_date(df_cmd['Date commande'])
 
+    # Boucle sur chaque ligne
+    for _, row in df_cmd.iterrows():
+        try:
+            cmd_value = row["Commande"]
+            da_value = row["DA"]
+            ao_value = row["AO_y"]
 
-def rechercher_interactif():
-    """
-    Mode interactif pour rechercher ISE, DA, AO ou CMD
-    """
-    print("\n" + "="*150)
-    print("🔎 SYSTÈME DE RECHERCHE ISE / DA / AO / CMD")
-    print("="*150)
-    
-    while True:
-        print("\n📋 Options:")
-        print("  1. Rechercher par code ISE")
-        print("  2. Rechercher par code DA")
-        print("  3. Rechercher par code AO")
-        print("  4. Rechercher par code CMD")
-        print("  5. Quitter")
-        
-        choix = input("\n👉 Votre choix: ").strip()
-        
-        if choix == "1":
-            code_ise = input("\n📝 Entrez le code ISE: ").strip()
-            if code_ise:
-                df = rechercher_ise(code_ise)
-                
-                if df is not None and not df.empty:
-                    export = input("\n💾 Voulez-vous exporter en Excel? (o/n): ").strip().lower()
-                    if export == 'o':
-                        nom_fichier = f"ISE_{code_ise}_export.xlsx"
-                        df.to_excel(nom_fichier, index=False)
-                        print(f"✅ Fichier exporté: {nom_fichier}")
-            else:
-                print("⚠️ Code ISE vide")
-                
-        elif choix == "2":
-            code_da = input("\n📝 Entrez le code DA: ").strip()
-            if code_da:
-                df = rechercher_da(code_da)
-                
-                if df is not None and not df.empty:
-                    export = input("\n💾 Voulez-vous exporter en Excel? (o/n): ").strip().lower()
-                    if export == 'o':
-                        nom_fichier = f"DA_{code_da}_export.xlsx"
-                        df.to_excel(nom_fichier, index=False)
-                        print(f"✅ Fichier exporté: {nom_fichier}")
-            else:
-                print("⚠️ Code DA vide")
-                
-        elif choix == "3":
-            code_ao = input("\n📝 Entrez le code AO: ").strip()
-            if code_ao:
-                df = rechercher_ao(code_ao)
-                
-                if df is not None and not df.empty:
-                    export = input("\n💾 Voulez-vous exporter en Excel? (o/n): ").strip().lower()
-                    if export == 'o':
-                        nom_fichier = f"AO_{code_ao}_export.xlsx"
-                        df.to_excel(nom_fichier, index=False)
-                        print(f"✅ Fichier exporté: {nom_fichier}")
-            else:
-                print("⚠️ Code AO vide")
-                
-        elif choix == "4":
-            code_cmd = input("\n📝 Entrez le code CMD: ").strip()
-            if code_cmd:
-                df = rechercher_cmd(code_cmd)
-                
-                if df is not None and not df.empty:
-                    export = input("\n💾 Voulez-vous exporter en Excel? (o/n): ").strip().lower()
-                    if export == 'o':
-                        nom_fichier = f"CMD_{code_cmd}_export.xlsx"
-                        df.to_excel(nom_fichier, index=False)
-                        print(f"✅ Fichier exporté: {nom_fichier}")
-            else:
-                print("⚠️ Code CMD vide")
-                
-        elif choix == "5":
-            print("\n👋 Au revoir!")
-            break
-        else:
-            print("❌ Choix invalide")
+            # 1. PLANT
+            plant_obj, _ = Plant.objects.get_or_create(code_plant=row["Plant"], defaults={"designation_plant": "inconnu"})
 
+            # 2. FAMILLE
+            famille_obj, _ = Famille.objects.get_or_create(designation_famille=row["SF"])
 
-# Utilisation directe
-if __name__ == "__main__":
-    # Exemples de recherche directe
-    # rechercher_ise("ISE12345")
-    # rechercher_da("DA67890")
-    # rechercher_ao("AO24680")
-    # rechercher_cmd("CMD99999")
-    
-    # Mode interactif
-    rechercher_interactif()
+            # 3. ARTICLE
+            article_obj, _ = Article.objects.get_or_create(
+                code_article=row["CODE"],
+                defaults={
+                    "designation_article": row["Description"],
+                    "udm": row["Udm"],
+                    "famille": famille_obj
+                }
+            )
+
+            # 4. LIEN PLANT <-> ARTICLE
+            Appartenir_P_A.objects.get_or_create(plant=plant_obj, article=article_obj)
+
+            # 5. AO (APPEL D'OFFRE)
+            ao_obj = None
+            if pd.notna(ao_value) and ao_value != "":
+                ao_obj, _ = AO.objects.get_or_create(id_AO=ao_value)
+
+            # 6. DA (DEMANDE D'ACHAT)
+            da_obj = None
+            if pd.notna(da_value):
+                da_obj, _ = DA.objects.get_or_create(id_DA=da_value, defaults={"ao": ao_obj})
+                # Si DA existe déjà sans AO, on l’associe
+                if da_obj.ao is None and ao_obj is not None:
+                    da_obj.ao = ao_obj
+                    da_obj.save()
+
+            # 7. CDE (COMMANDE)
+            cde_obj, _ = Cde.objects.get_or_create(
+                id_Cde=cmd_value,
+                defaults={"ao": ao_obj}
+            )
+
+            # 8. FOURNISSEUR
+            fournisseur_obj, _ = Fournisseur.objects.get_or_create(
+                designation_Fournisseur=row["Fournisseur"]
+            )
+
+            # 9. ENREGISTRER LA RELATION COMMANDE (CORRECTION ICI ⬇️)
+            # On utilise .create() pour forcer l'ajout de la ligne même si c'est le même article/commande
+            # Cela permet d'avoir tes 14 lignes (doublons acceptés)
+            Commander.objects.create(
+                article=article_obj,
+                cde=cde_obj,
+                fournisseur=fournisseur_obj,
+                montant_Cde=row["Montant Commande"],
+                quantite_Cde=row["Qte Commande"],
+                date_Cde=row["Date commande"]
+            )
+
+            print(f"Commande {cmd_value} : Ligne ajoutée ({row['CODE']})")
+
+        except Exception as e:
+            print(f"Erreur sur la ligne Commande {row.get('Commande', 'N/A')} : {e}")
+
+    print(" Importation des Commandes terminée avec succès !")
