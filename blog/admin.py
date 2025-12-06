@@ -15,3 +15,17 @@ admin.site.register(Appartenir_A_I)
 admin.site.register(Appartenir_A_D)
 admin.site.register(Appartenir_A_A)
 admin.site.register(Commander)
+
+
+
+from .models import ImportHistory
+
+@admin.register(ImportHistory)
+class ImportHistoryAdmin(admin.ModelAdmin):
+    list_display = ['type_fichier', 'nom_fichier', 'date_import', 'nb_lignes_traitees', 'nb_erreurs', 'statut']
+    list_filter = ['type_fichier', 'statut', 'date_import']
+    search_fields = ['nom_fichier', 'details']
+    readonly_fields = ['date_import']
+    
+    def has_add_permission(self, request):
+        return False  # Empêcher l'ajout manuel

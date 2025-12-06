@@ -223,8 +223,213 @@
                 padding: 16px 20px;
             }
         }
+                /* INPUT FILE CACHÉ */
+        .file-input { display: none; }
+
+        .btn-import.loading {
+            opacity: 0.6;
+            cursor: wait;
+            pointer-events: none;
+        }
+
+        /* MESSAGE DE STATUT */
+        .status-message {
+            margin-top: 15px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        /* Modal Historique */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #999;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.modal-body {
+    padding: 25px;
+    max-height: calc(80vh - 80px);
+    overflow-y: auto;
+}
+
+/* Table dans la modal */
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.history-table thead {
+    background: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.history-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e0e0e0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.history-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.history-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.history-table td {
+    padding: 12px 15px;
+    color: #555;
+}
+
+.history-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.history-badge.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.history-badge.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.history-badge.partial {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #e6f4ea;
+    color: #009a44;
+}
+
+.details-btn {
+    background: none;
+    border: none;
+    color: #1976d2;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.details-btn:hover {
+    color: #0d47a1;
+}
     </style>
 </head>
+
 <body>
 
     <aside class="sidebar">
@@ -247,7 +452,7 @@
                 </a>
             </li>
             <li><a href="#" class="nav-item"><span class="material-icons-outlined">bar_chart</span> Analyses</a></li>
-            <li><a href="#" class="nav-item"><span class="material-icons-outlined">settings</span> Paramètres</a></li>
+            <li><a href="{% url 'parametres' %}" class="nav-item"><span class="material-icons-outlined">settings</span>Paramètres</a></li>
         </ul>
         <a href="#" class="nav-item logout"><span class="material-icons-outlined">logout</span> Déconnexion</a>
     </aside>
@@ -259,18 +464,60 @@
             <p>Recherchez et tracez le flux complet ISE → DA → AO → Commande</p>
         </div>
 
-        <div class="card-container">
-            <div class="import-title">
-                <span class="material-icons-outlined">upload_file</span> Importer fichier
-            </div>
-            <div class="import-buttons">
-                <button class="btn-import">Importer ISE</button>
-                <button class="btn-import">Importer DA</button>
-                <button class="btn-import">Importer AO</button>
-                <button class="btn-import">Importer CMD</button>
-            </div>
-            <span class="format-info">Formats acceptés : .xlsx, .xls</span>
+       <div class="card-container">
+    <div class="import-title">
+        <span class="material-icons-outlined">upload_file</span> Importer fichier
+    </div>
+    <div class="import-buttons">
+        <!-- ISE -->
+        <input type="file" id="file-ise" class="file-input" accept=".xlsx,.xls">
+        <button class="btn-import" onclick="triggerFileInput('ise')">Importer ISE</button>
+
+        <!-- DA -->
+        <input type="file" id="file-da" class="file-input" accept=".xlsx,.xls">
+        <button class="btn-import" onclick="triggerFileInput('da')">Importer DA</button>
+
+        <!-- AO -->
+        <input type="file" id="file-ao" class="file-input" accept=".xlsx,.xls">
+        <button class="btn-import" onclick="triggerFileInput('ao')">Importer AO</button>
+
+        <!-- CMD -->
+        <input type="file" id="file-cmd" class="file-input" accept=".xlsx,.xls">
+        <button class="btn-import" onclick="triggerFileInput('cmd')">Importer CMD</button>
+
+        <!-- ✅ NOUVEAU : Bouton Historique -->
+        <button class="btn-import" style="background: #e3f2fd; color: #1976d2; font-weight: 600;" onclick="openHistoryModal()">
+            <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 5px; font-size: 18px;">history</span>
+            Historique
+        </button>
+    </div>
+    <span class="format-info">Formats acceptés : .xlsx, .xls</span>
+
+    <!-- Message de statut -->
+    <div id="status-message" class="status-message"></div>
+</div>
+
+<!-- ✅ NOUVELLE POPUP : Modal Historique -->
+<div id="historyModal" class="modal-overlay" onclick="closeHistoryModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>
+                <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 8px;">history</span>
+                Historique des imports
+            </h3>
+            <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
         </div>
+        
+        <div class="modal-body">
+            <div id="historyContent">
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <span class="material-icons-outlined" style="font-size: 48px; opacity: 0.3;">hourglass_empty</span>
+                    <p>Chargement...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
         <div class="card-container">
             <div class="import-title">
@@ -319,6 +566,115 @@
     </main>
 
     <script>
+        // Récupérer le CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // Déclencher le sélecteur de fichier
+        function triggerFileInput(type) {
+            document.getElementById('file-' + type).click();
+        }
+
+        // Gérer la sélection de fichier pour ISE
+        document.getElementById('file-ise').addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                uploadFile('ise', this.files[0]);
+            }
+        });
+
+        // Gérer la sélection de fichier pour DA
+        document.getElementById('file-da').addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                uploadFile('da', this.files[0]);
+            }
+        });
+
+        // Gérer la sélection de fichier pour AO
+        document.getElementById('file-ao').addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                uploadFile('ao', this.files[0]);
+            }
+        });
+
+        // Gérer la sélection de fichier pour CMD
+        document.getElementById('file-cmd').addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                uploadFile('cmd', this.files[0]);
+            }
+        });
+
+        // Fonction d'upload
+        function uploadFile(type, file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const statusDiv = document.getElementById('status-message');
+            const buttons = document.querySelectorAll('.btn-import');
+            
+            // Afficher le chargement
+            statusDiv.textContent = `⏳ Import de ${type.toUpperCase()} en cours...`;
+            statusDiv.className = 'status-message';
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fff3cd';
+            statusDiv.style.color = '#856404';
+            statusDiv.style.border = '1px solid #ffeaa7';
+
+            // Désactiver tous les boutons
+            buttons.forEach(btn => btn.classList.add('loading'));
+
+            // Envoyer le fichier
+            fetch(`/import/${type}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Réactiver les boutons
+                buttons.forEach(btn => btn.classList.remove('loading'));
+
+                if (data.success) {
+                    statusDiv.textContent = data.message;
+                    statusDiv.className = 'status-message success';
+                } else {
+                    statusDiv.textContent = data.message;
+                    statusDiv.className = 'status-message error';
+                }
+
+                // Masquer après 5 secondes
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+
+                // Réinitialiser l'input file
+                document.getElementById('file-' + type).value = '';
+            })
+            .catch(error => {
+                buttons.forEach(btn => btn.classList.remove('loading'));
+                statusDiv.textContent = `❌ Erreur réseau : ${error.message}`;
+                statusDiv.className = 'status-message error';
+                
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            });
+        }
         function selectType(type) {
             // ... (cette partie selectType ne change pas) ...
             document.getElementById('hidden_type').value = type;
@@ -389,6 +745,98 @@
                 }
             }, 100);
         });
+
+        // ✅ NOUVEAU : Gestion de la modal historique
+function openHistoryModal() {
+    const modal = document.getElementById('historyModal');
+    modal.classList.add('show');
+    loadHistory();
+}
+
+function closeHistoryModal(event) {
+    // Ne fermer que si on clique sur l'overlay, pas sur le contenu
+    if (!event || event.target.id === 'historyModal') {
+        document.getElementById('historyModal').classList.remove('show');
+    }
+}
+
+function loadHistory() {
+    const contentDiv = document.getElementById('historyContent');
+    
+    contentDiv.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #999;">
+            <span class="material-icons-outlined" style="font-size: 48px; opacity: 0.3;">hourglass_empty</span>
+            <p>Chargement...</p>
+        </div>
+    `;
+    
+    fetch('/import/history/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data.length > 0) {
+                let html = '<table class="history-table"><thead><tr>';
+                html += '<th>Type</th>';
+                html += '<th>Fichier</th>';
+                html += '<th>Date</th>';
+                html += '<th>Lignes</th>';
+                html += '<th>Erreurs</th>';
+                html += '<th>Statut</th>';
+                
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(imp => {
+                    html += '<tr>';
+                    html += `<td><span class="type-badge">${imp.type_fichier}</span></td>`;
+                    html += `<td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${imp.nom_fichier}">${imp.nom_fichier}</td>`;
+                    html += `<td style="white-space: nowrap;">${imp.date_import}</td>`;
+                    html += `<td>${imp.nb_lignes_traitees}</td>`;
+                    html += `<td>${imp.nb_erreurs > 0 ? `<span style="color: #ef4444;">${imp.nb_erreurs}</span>` : imp.nb_erreurs}</td>`;
+                    
+                    let badgeClass = imp.statut === 'SUCCESS' ? 'success' : (imp.statut === 'ERROR' ? 'error' : 'partial');
+                    let badgeText = imp.statut === 'SUCCESS' ? 'Succès' : (imp.statut === 'ERROR' ? 'Erreur' : 'Partiel');
+                    html += `<td><span class="history-badge ${badgeClass}">${badgeText}</span></td>`;
+                    
+                    if (imp.details) {
+                        html += `<td><button class="details-btn" onclick='showDetails(${JSON.stringify(imp.details)})'>Voir</button></td>`;
+                    } else {
+                        html += '<td>-</td>';
+                    }
+                    
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                contentDiv.innerHTML = html;
+            } else {
+                contentDiv.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <span class="material-icons-outlined" style="font-size: 48px; opacity: 0.3;">inbox</span>
+                        <p>Aucun historique d'import</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            contentDiv.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #ef4444;">
+                    <span class="material-icons-outlined" style="font-size: 48px; opacity: 0.3;">error</span>
+                    <p>Erreur de chargement : ${error.message}</p>
+                </div>
+            `;
+        });
+}
+
+function showDetails(details) {
+    alert(details);
+    // Ou vous pouvez créer une autre modal pour un affichage plus joli
+}
+
+// Fermer la modal avec la touche Échap
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeHistoryModal();
+    }
+});
     </script>
 </body>
 </html>
