@@ -8,7 +8,7 @@ from blog.models import Plant, Famille, Article, AO, ISE, DA, Cde, Fournisseur, 
 def process_cde_data(fichier):
     nb_lignes = 0
     nb_erreurs = 0
-    erreurs_detail = []
+    
     
     try:
        
@@ -43,7 +43,7 @@ def process_cde_data(fichier):
                 # Vérifications
                 if not cmd_value or cmd_value in ['NAN', 'NONE', 'N/A', '']:
                     nb_erreurs += 1
-                    erreurs_detail.append(f"Ligne {nb_lignes}: ID Commande vide")
+                    
                     continue
 
                 # 1. PLANT
@@ -115,9 +115,7 @@ def process_cde_data(fichier):
 
             except Exception as e:
                 nb_erreurs += 1
-                erreur_msg = f"Ligne {nb_lignes} - CMD {row.get('Commande', 'N/A')}: {str(e)}"
-                erreurs_detail.append(erreur_msg)
-                print(f"❌ {erreur_msg}")
+              
 
         # ✅ ENREGISTRER L'HISTORIQUE
         ImportHistory.objects.create(
@@ -126,7 +124,7 @@ def process_cde_data(fichier):
             nb_lignes_traitees=nb_lignes,
             nb_erreurs=nb_erreurs,
             statut='SUCCESS' if nb_erreurs == 0 else ('PARTIAL' if nb_erreurs < nb_lignes else 'ERROR'),
-            details='\n'.join(erreurs_detail[:50]) if erreurs_detail else None
+           
         )
         
         print(f"✅ Import CMD terminé : {nb_lignes} lignes, {nb_erreurs} erreurs")

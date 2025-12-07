@@ -7,7 +7,7 @@ from blog.models import Plant, Famille, Article, AO, ISE, DA, Cde, Fournisseur, 
 def process_da_data(fichier):
     nb_lignes = 0
     nb_erreurs = 0
-    erreurs_detail = []
+    
     
     try:
         df_da_1 = pd.read_excel(fichier, sheet_name=0)
@@ -86,10 +86,7 @@ def process_da_data(fichier):
 
             except Exception as e:
                 nb_erreurs += 1
-                erreur_msg = f"Ligne {nb_lignes} - DA {row.get('DA', 'inconnue')}: {str(e)}"
-                erreurs_detail.append(erreur_msg)
-                print(f"❌ {erreur_msg}")
-
+                
         # ✅ ENREGISTRER L'HISTORIQUE
         ImportHistory.objects.create(
             type_fichier='DA',
@@ -97,7 +94,7 @@ def process_da_data(fichier):
             nb_lignes_traitees=nb_lignes,
             nb_erreurs=nb_erreurs,
             statut='SUCCESS' if nb_erreurs == 0 else ('PARTIAL' if nb_erreurs < nb_lignes else 'ERROR'),
-            details='\n'.join(erreurs_detail[:50]) if erreurs_detail else None
+            
         )
         
         print(f"✅ Import DA terminé : {nb_lignes} lignes, {nb_erreurs} erreurs")

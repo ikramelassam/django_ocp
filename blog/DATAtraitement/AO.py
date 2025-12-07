@@ -7,7 +7,7 @@ from blog.models import Plant, Famille, Article, AO, ISE, DA, Cde, Fournisseur, 
 def process_ao_data(fichier):
     nb_lignes = 0
     nb_erreurs = 0
-    erreurs_detail = []
+ 
     
     try:
         df_ao = pd.read_excel(fichier)
@@ -48,11 +48,10 @@ def process_ao_data(fichier):
 
             except DA.DoesNotExist:
                 nb_erreurs += 1
-                erreurs_detail.append(f"DA {da_value} non trouvée pour AO {ao_value}")
+                
             except Exception as e:
                 nb_erreurs += 1
-                erreurs_detail.append(f"Ligne {nb_lignes}: {str(e)}")
-
+               
         # ✅ ENREGISTRER L'HISTORIQUE
         ImportHistory.objects.create(
             type_fichier='AO',
@@ -60,7 +59,7 @@ def process_ao_data(fichier):
             nb_lignes_traitees=nb_lignes,
             nb_erreurs=nb_erreurs,
             statut='SUCCESS' if nb_erreurs == 0 else ('PARTIAL' if nb_erreurs < nb_lignes else 'ERROR'),
-            details='\n'.join(erreurs_detail[:50]) if erreurs_detail else None
+            
         )
         
         print(f"✅ Import AO terminé : {nb_lignes} lignes, {nb_erreurs} erreurs")

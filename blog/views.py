@@ -98,7 +98,7 @@ from django.db.models import Sum, Max
 
 def dashboard_view(request):
     total_ise = ISE.objects.count()
-    total_da = DA.objects.exclude(ao__isnull=True).count()
+    total_da = DA.objects.count()
     total_ao = AO.objects.count()
     total_cmd = Cde.objects.count()
 

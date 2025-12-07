@@ -160,7 +160,7 @@ class ImportHistory(models.Model):
     nb_lignes_traitees = models.IntegerField(default=0)
     nb_erreurs = models.IntegerField(default=0)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='SUCCESS')
-    details = models.TextField(blank=True, null=True)
+    
     
     class Meta:
         ordering = ['-date_import']
